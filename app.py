@@ -138,7 +138,7 @@ else:
     if st.session_state.current_question:
         category, question = st.session_state.current_question
         st.subheader(f"Kategorie: {category}")
-        st.write(f"**Frage:** {question}")
+        st.markdown(f"### *{question}*")  # Frage groß und kursiv
 
         for player in st.session_state.players:
             if player not in st.session_state.votes:
@@ -164,12 +164,14 @@ else:
                 st.write(f"Standardabweichung: **{stdev:.2f}**")
                 st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
-                # Diagramm
+                # Diagramm fixen
+                counts = pd.Series(votes).value_counts().reindex(range(1, 8), fill_value=0)
                 fig, ax = plt.subplots()
-                counts = pd.Series(votes).value_counts().sort_index()
                 ax.bar(counts.index, counts.values)
+                ax.set_xticks(range(1, 8))
                 ax.set_xlabel('Delegationsstufe')
                 ax.set_ylabel('Anzahl Stimmen')
+                ax.set_ylim(0, max(counts.values) + 1)
                 st.pyplot(fig)
 
                 # Log speichern
