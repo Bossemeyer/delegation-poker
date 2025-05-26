@@ -42,6 +42,10 @@ if 'round_log' not in st.session_state:
     st.session_state.round_log = []
 if 'ready_to_start' not in st.session_state:
     st.session_state.ready_to_start = False
+if 'selected_category' not in st.session_state:
+    st.session_state.selected_category = None
+if 'custom_question' not in st.session_state:
+    st.session_state.custom_question = None
 
 # --- Einleitung ---
 if not st.session_state.intro_shown:
@@ -77,7 +81,7 @@ if not st.session_state.intro_shown:
         st.session_state.intro_shown = True
         st.rerun()
 
-# --- Spieler:innen-Login + Admin-Definition ---
+# --- Spieler:innen-Login ---
 elif not st.session_state.ready_to_start:
     st.header("Spieler:innen anmelden")
     name = st.text_input("Name eingeben:")
@@ -89,9 +93,26 @@ elif not st.session_state.ready_to_start:
     st.write("Angemeldete Spieler:innen:", ", ".join(st.session_state.players))
     if st.session_state.admin:
         st.write(f"**Admin:** {st.session_state.admin}")
-    if st.button("Zur Spielrunde wechseln", disabled=(len(st.session_state.players) < 1)):
+    if st.button("Zur Kategorie-Auswahl", disabled=(len(st.session_state.players) < 1)):
         st.session_state.ready_to_start = True
         st.rerun()
+
+# --- Kategorie- und Fragenauswahl ---
+elif not st.session_state.selected_category:
+    st.header("Kategorie auswählen")
+    categories = list(delegation_questions.keys()) + ["Eigene Frage eingeben"]
+    category_choice = st.selectbox("Wähle eine Kategorie:", categories)
+
+    if category_choice == "Eigene Frage eingeben":
+        custom_question = st.text_input("Formuliere deine eigene Frage:")
+        if st.button("Bestätigen (eigene Frage)") and custom_question:
+            st.session_state.selected_category = "Eigene Frage"
+            st.session_state.custom_question = custom_question
+            st.rerun()
+    else:
+        if st.button("Bestätigen (Kategorie)"):
+            st.session_state.selected_category = category_choice
+            st.rerun()
 
 # --- Spielrunde ---
 else:
@@ -99,9 +120,11 @@ else:
     is_admin = st.sidebar.text_input("Admin-Check (Name eingeben):") == st.session_state.admin
 
     if not st.session_state.current_question and is_admin:
-        category = random.choice(list(delegation_questions.keys()))
-        question = random.choice(delegation_questions[category])
-        st.session_state.current_question = (category, question)
+        if st.session_state.selected_category == "Eigene Frage":
+            question = st.session_state.custom_question
+        else:
+            question = random.choice(delegation_questions[st.session_state.selected_category])
+        st.session_state.current_question = (st.session_state.selected_category, question)
         st.session_state.votes = {}
 
     if st.session_state.current_question:
@@ -162,6 +185,8 @@ else:
                     st.session_state.round_log = []
                     st.session_state.intro_shown = False
                     st.session_state.ready_to_start = False
+                    st.session_state.selected_category = None
+                    st.session_state.custom_question = None
                     st.rerun()
 
 # --- Export-Button ---
