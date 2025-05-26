@@ -46,13 +46,12 @@ if not st.session_state.intro_shown:
     st.title("Delegation Poker (Admin gesteuert)")
 
     st.markdown("""
-    ## Delegation Poker – Was ist das?
+    ## 🃏 Delegation Poker – Was ist das?
     Delegation Poker ist ein spielerisches Tool, mit dem Teams klären, **wie viel Entscheidungsfreiheit** einzelne Teammitglieder:innen bei bestimmten Themen haben.
     Ziel ist es, Transparenz zu schaffen: Wer entscheidet was? Und auf welcher Delegationsebene?
 
-    ### Wie funktioniert es?
+    ### 🔑 Wie funktioniert es?
     - Es gibt **7 Delegationsebenen**:
-
       1️⃣ Ich entscheide allein.  
       2️⃣ Ich entscheide und erkläre dir meine Gründe.  
       3️⃣ Ich entscheide, hole mir vorher aber deine Meinung ein.  
@@ -74,7 +73,7 @@ if not st.session_state.intro_shown:
 
     if st.button("Loslegen"):
         st.session_state.intro_shown = True
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Spieler:innen-Login + Admin-Definition ---
 elif not st.session_state.players:
@@ -89,7 +88,7 @@ elif not st.session_state.players:
     if st.session_state.admin:
         st.write(f"**Admin:** {st.session_state.admin}")
     if st.button("Starten", disabled=(len(st.session_state.players) < 1)):
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Spielrunde ---
 else:
@@ -112,7 +111,7 @@ else:
                 vote = st.selectbox(f"{player}, wähle deine Stufe (1–7):", list(range(1, 8)), key=f"vote_{player}")
                 if st.button(f"Bestätigen ({player})", key=f"confirm_{player}"):
                     st.session_state.votes[player] = vote
-                    st.experimental_rerun()
+                    st.rerun()
 
         if len(st.session_state.votes) == len(st.session_state.players) and is_admin:
             st.success("Alle Stimmen abgegeben! Ergebnisse freigeben?")
@@ -150,7 +149,7 @@ else:
                 if st.button("Nächste Runde"):
                     st.session_state.current_question = None
                     st.session_state.votes = {}
-                    st.experimental_rerun()
+                    st.rerun()
 
                 if st.button("Neustart"):
                     st.session_state.players = []
@@ -159,7 +158,7 @@ else:
                     st.session_state.votes = {}
                     st.session_state.round_log = []
                     st.session_state.intro_shown = False
-                    st.experimental_rerun()
+                    st.rerun()
 
 # --- Export-Button ---
 if st.session_state.round_log and is_admin:
