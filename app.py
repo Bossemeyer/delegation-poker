@@ -164,14 +164,16 @@ else:
                 st.write(f"Standardabweichung: **{stdev:.2f}**")
                 st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
-                # Diagramm fixen
-                counts = pd.Series(votes).value_counts().reindex(range(1, 8), fill_value=0)
+                # Neues Diagramm: Spielernamen auf X-Achse, Stufen auf Y-Achse
                 fig, ax = plt.subplots()
-                ax.bar(counts.index, counts.values)
-                ax.set_xticks(range(1, 8))
-                ax.set_xlabel('Delegationsstufe')
-                ax.set_ylabel('Anzahl Stimmen')
-                ax.set_ylim(0, max(counts.values) + 1)
+                players = list(st.session_state.votes.keys())
+                scores = list(st.session_state.votes.values())
+
+                ax.bar(players, scores)
+                ax.set_xlabel('Spieler:innen')
+                ax.set_ylabel('Gewählte Delegationsstufe')
+                ax.set_ylim(0, 8)
+                ax.set_title('Delegationsstufen pro Spieler:in')
                 st.pyplot(fig)
 
                 # Log speichern
