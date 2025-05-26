@@ -358,8 +358,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;'>
-        <b>Powered by Y-SiTE</b>, Y-Bindestrich C-Tab geschrieben<br>
-        Lars Bossemeyer
+        <b>Powered by Y-SiTE - Lars Bossemeyer
     </div>
     """,
     unsafe_allow_html=True
