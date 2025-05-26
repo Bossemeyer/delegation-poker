@@ -38,7 +38,20 @@ delegation_levels = {
     7: "7. Du entscheidest komplett eigenständig"
 }
 
-# Session State initialisieren
+# --- Helper: Reset alles ---
+def reset_all_states():
+    st.session_state.players = []
+    st.session_state.admin = None
+    st.session_state.current_question = None
+    st.session_state.votes = {}
+    st.session_state.round_log = []
+    st.session_state.intro_shown = False
+    st.session_state.ready_to_start = False
+    st.session_state.selected_category = None
+    st.session_state.custom_question = None
+    st.rerun()
+
+# --- Session State initialisieren ---
 if 'intro_shown' not in st.session_state:
     st.session_state.intro_shown = False
 if 'players' not in st.session_state:
@@ -149,6 +162,7 @@ else:
                     st.session_state.votes[player] = vote_number
                     st.rerun()
 
+        # Nur wenn alle Stimmen abgegeben
         if len(st.session_state.votes) == len(st.session_state.players):
             st.success("Alle Stimmen abgegeben! Ergebnisse freigeben?")
             if st.button("Aufdecken"):
@@ -186,7 +200,7 @@ else:
                     'consensus': consensus
                 })
 
-                # Buttons
+                # Runde-spezifische Buttons
                 if st.button("Frage wiederholen"):
                     st.session_state.votes = {}
                     st.rerun()
@@ -196,19 +210,10 @@ else:
                     st.session_state.votes = {}
                     st.rerun()
 
-                if st.button("Neustart"):
-                    st.session_state.players = []
-                    st.session_state.admin = None
-                    st.session_state.current_question = None
-                    st.session_state.votes = {}
-                    st.session_state.round_log = []
-                    st.session_state.intro_shown = False
-                    st.session_state.ready_to_start = False
-                    st.session_state.selected_category = None
-                    st.session_state.custom_question = None
-                    st.rerun()
+# --- Immer sichtbare Buttons ---
+if st.button("Neustart"):
+    reset_all_states()
 
-# --- Export-Button ---
 if st.session_state.round_log:
     df = pd.DataFrame([
         {
