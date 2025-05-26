@@ -3,6 +3,23 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# --- Logo im Kopfbereich linksbündig ---
+logo_path = "Y-SiTE Logo.png"  # Exakt so wie im Repo!
+st.markdown(
+    f"""
+    <div style="display: flex; align-items: flex-start;">
+        <img src="data:image/png;base64,{st.file_uploader(logo_path).getvalue().decode('utf-8') if st.file_uploader(logo_path) else ''}" width="120" style="margin-right: 16px;" />
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+# Falls du Fehler mit obigem Code bekommst, verwende die Standardmethode:
+try:
+    st.image(logo_path, width=120)
+except Exception:
+    st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
+
+
 # --- Fragenstruktur (je Kategorie 5 Fragen) ---
 delegation_questions = {
     "Strategische Ausrichtung": [
