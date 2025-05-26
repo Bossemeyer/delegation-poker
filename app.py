@@ -40,6 +40,8 @@ if 'votes' not in st.session_state:
     st.session_state.votes = {}
 if 'round_log' not in st.session_state:
     st.session_state.round_log = []
+if 'ready_to_start' not in st.session_state:
+    st.session_state.ready_to_start = False
 
 # --- Einleitung ---
 if not st.session_state.intro_shown:
@@ -76,7 +78,7 @@ if not st.session_state.intro_shown:
         st.rerun()
 
 # --- Spieler:innen-Login + Admin-Definition ---
-elif not st.session_state.players:
+elif not st.session_state.ready_to_start:
     st.header("Spieler:innen anmelden")
     name = st.text_input("Name eingeben:")
     if st.button("Hinzufügen"):
@@ -87,7 +89,8 @@ elif not st.session_state.players:
     st.write("Angemeldete Spieler:innen:", ", ".join(st.session_state.players))
     if st.session_state.admin:
         st.write(f"**Admin:** {st.session_state.admin}")
-    if st.button("Starten", disabled=(len(st.session_state.players) < 1)):
+    if st.button("Zur Spielrunde wechseln", disabled=(len(st.session_state.players) < 1)):
+        st.session_state.ready_to_start = True
         st.rerun()
 
 # --- Spielrunde ---
@@ -158,6 +161,7 @@ else:
                     st.session_state.votes = {}
                     st.session_state.round_log = []
                     st.session_state.intro_shown = False
+                    st.session_state.ready_to_start = False
                     st.rerun()
 
 # --- Export-Button ---
