@@ -27,6 +27,17 @@ delegation_questions = {
     ]
 }
 
+# --- Delegation Levels ---
+delegation_levels = {
+    1: "1. Ich entscheide allein",
+    2: "2. Ich entscheide und erkläre dir meine Gründe",
+    3: "3. Ich entscheide, hole mir vorher aber deine Meinung ein",
+    4: "4. Wir entscheiden gemeinsam",
+    5: "5. Du entscheidest, nachdem du meinen Rat gehört hast",
+    6: "6. Du entscheidest, informierst mich aber",
+    7: "7. Du entscheidest komplett eigenständig"
+}
+
 # Session State initialisieren
 if 'intro_shown' not in st.session_state:
     st.session_state.intro_shown = False
@@ -52,28 +63,28 @@ if not st.session_state.intro_shown:
     st.title("Delegation Poker (Admin gesteuert)")
 
     st.markdown("""
-    ## 🃏 Delegation Poker – Was ist das?
+    ## Was ist Delegation Poker?
     Delegation Poker ist ein spielerisches Tool, mit dem Teams klären, **wie viel Entscheidungsfreiheit** einzelne Teammitglieder:innen bei bestimmten Themen haben.
     Ziel ist es, Transparenz zu schaffen: Wer entscheidet was? Und auf welcher Delegationsebene?
 
-    ### 🔑 Wie funktioniert es?
-    - Es gibt **7 Delegationsebenen**:
-      1️⃣ Ich entscheide allein.  
-      2️⃣ Ich entscheide und erkläre dir meine Gründe.  
-      3️⃣ Ich entscheide, hole mir vorher aber deine Meinung ein.  
-      4️⃣ Wir entscheiden gemeinsam.  
-      5️⃣ Du entscheidest, nachdem du meinen Rat gehört hast.  
-      6️⃣ Du entscheidest, informierst mich aber.  
-      7️⃣ Du entscheidest komplett eigenständig.
+    ### Wie funktioniert es?
+    - Es gibt 7 Delegationsebenen:
+      1. Ich entscheide allein  
+      2. Ich entscheide und erkläre dir meine Gründe  
+      3. Ich entscheide, hole mir vorher aber deine Meinung ein  
+      4. Wir entscheiden gemeinsam  
+      5. Du entscheidest, nachdem du meinen Rat gehört hast  
+      6. Du entscheidest, informierst mich aber  
+      7. Du entscheidest komplett eigenständig
 
     - In jeder Runde wird eine Frage gestellt, z. B.:  
-    **„Wer entscheidet, ob neue Softwaretools angeschafft werden?“**
+    „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-    - Alle Spieler:innen wählen **verdeckt** ihre Einschätzung (Stufe 1–7).
+    - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7).
 
     - Danach werden die Ergebnisse sichtbar gemacht und gemeinsam besprochen.
 
-    ### 🎯 Ziel
+    ### Ziel
     Am Ende habt ihr ein besseres Verständnis davon, wie Verantwortung und Entscheidungen im Team verteilt sind – und wo ihr vielleicht etwas anpassen wollt.
     """)
 
@@ -134,9 +145,11 @@ else:
 
         for player in st.session_state.players:
             if player not in st.session_state.votes:
-                vote = st.selectbox(f"{player}, wähle deine Stufe (1–7):", list(range(1, 8)), key=f"vote_{player}")
+                options = list(delegation_levels.values())
+                vote_label = st.selectbox(f"{player}, wähle deine Stufe:", options, key=f"vote_{player}")
+                vote_number = int(vote_label.split('.')[0])  # Extrahiere die Zahl
                 if st.button(f"Bestätigen ({player})", key=f"confirm_{player}"):
-                    st.session_state.votes[player] = vote
+                    st.session_state.votes[player] = vote_number
                     st.rerun()
 
         if len(st.session_state.votes) == len(st.session_state.players) and is_admin:
@@ -149,7 +162,7 @@ else:
 
                 st.write("### Ergebnisse")
                 for player, vote in st.session_state.votes.items():
-                    st.write(f"{player}: Stufe {vote}")
+                    st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
                 st.write(f"Durchschnittliche Stufe: **{avg:.2f}**")
                 st.write(f"Standardabweichung: **{stdev:.2f}**")
                 st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
