@@ -102,7 +102,7 @@ for key, default in [
 
 # --- Einleitung ---
 if st.session_state.phase == 'setup':
-    st.title("Delegation Poker (Admin gesteuert)")
+    st.title("Delegation Poker")
 
     st.markdown(
         """
