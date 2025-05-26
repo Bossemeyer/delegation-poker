@@ -102,11 +102,11 @@ for key, default in [
 
 # --- Einleitung ---
 if st.session_state.phase == 'setup':
-    st.title("Delegation Poker")
+    st.title("Delegation Poker (Admin gesteuert)")
 
     st.markdown(
         """
-        ### Was ist Delegation Poker?
+        ## Was ist Delegation Poker?
         Delegation Poker ist ein spielerisches Tool, mit dem Teams klären, **wie viel Entscheidungsfreiheit** einzelne Teammitglieder:innen bei bestimmten Themen haben.
         Ziel ist es, Transparenz zu schaffen: Wer entscheidet was? Und auf welcher Delegationsebene?
 
@@ -120,13 +120,10 @@ if st.session_state.phase == 'setup':
           6. Du entscheidest, informierst mich aber  
           7. Du entscheidest komplett eigenständig
 
-
         - In jeder Runde wird eine Frage gestellt, z. B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-        - Alle Spieler:innen wählen ihre Einschätzung im Chat von Teams (Stufe 1–7) 
-
-        - Wenn alle ihren Eintrag vorgenommen haben, wird das Ergebnis in den Chat gesendet.
+        - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7).
 
         - Danach werden die Ergebnisse sichtbar gemacht und gemeinsam besprochen.
 
@@ -293,7 +290,10 @@ elif st.session_state.phase == 'results':
     if st.button("Nächste Runde"):
         st.session_state.current_question = None
         st.session_state.votes = {}
-        st.session_state.phase = 'voting'
+        if category == "Eigene Frage":
+            st.session_state.phase = 'category'
+        else:
+            st.session_state.phase = 'voting'
         st.rerun()
 
 # --- Immer sichtbare Buttons und Reset-Dialog ---
@@ -358,7 +358,8 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;'>
-        <b>Powered by Y-SiTE - Lars Bossemeyer
+        <b>Powered by Y-SiTE</b>, Y-Bindestrich C-Tab geschrieben<br>
+        Lars Bossemeyer
     </div>
     """,
     unsafe_allow_html=True
