@@ -120,10 +120,13 @@ if st.session_state.phase == 'setup':
           6. Du entscheidest, informierst mich aber  
           7. Du entscheidest komplett eigenständig
 
+
         - In jeder Runde wird eine Frage gestellt, z. B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-        - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7).
+        - Alle Spieler:innen wählen ihre Einschätzung im Chat von Teams (Stufe 1–7) 
+
+        - Wenn alle ihren Eintrag vorgenommen haben, wird das Ergebnis in den Chat gesendet.
 
         - Danach werden die Ergebnisse sichtbar gemacht und gemeinsam besprochen.
 
