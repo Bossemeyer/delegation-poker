@@ -49,6 +49,7 @@ def reset_all_states():
     st.session_state.ready_to_start = False
     st.session_state.selected_category = None
     st.session_state.custom_question = None
+    st.session_state.phase = 'setup'
     st.rerun()
 
 # --- Session-Init ---
@@ -61,13 +62,14 @@ for key, default in [
     ('round_log', []),
     ('ready_to_start', False),
     ('selected_category', None),
-    ('custom_question', None)
+    ('custom_question', None),
+    ('phase', 'setup')  # NEU: Phasensteuerung
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
 
 # --- Einleitung ---
-if not st.session_state.intro_shown:
+if st.session_state.phase == 'setup':
     st.title("Delegation Poker (Admin gesteuert)")
 
     st.markdown(
@@ -99,11 +101,11 @@ if not st.session_state.intro_shown:
     )
 
     if st.button("Loslegen"):
-        st.session_state.intro_shown = True
+        st.session_state.phase = 'login'
         st.rerun()
 
 # --- Spieler:innen-Login ---
-elif not st.session_state.ready_to_start:
+elif st.session_state.phase == 'login':
     st.header("Spieler:innen anmelden")
     name = st.text_input("Name eingeben:")
     if st.button("Hinzufügen"):
@@ -115,11 +117,11 @@ elif not st.session_state.ready_to_start:
     if st.session_state.admin:
         st.write(f"**Admin:** {st.session_state.admin}")
     if st.button("Zur Kategorie-Auswahl", disabled=(len(st.session_state.players) < 1)):
-        st.session_state.ready_to_start = True
+        st.session_state.phase = 'category'
         st.rerun()
 
 # --- Kategorie- und Fragenauswahl ---
-elif not st.session_state.selected_category:
+elif st.session_state.phase == 'category':
     st.header("Kategorie auswählen")
     categories = list(delegation_questions.keys()) + ["Eigene Frage eingeben"]
     category_choice = st.selectbox("Wähle eine Kategorie:", categories)
@@ -129,14 +131,16 @@ elif not st.session_state.selected_category:
         if st.button("Bestätigen (eigene Frage)") and custom_question:
             st.session_state.selected_category = "Eigene Frage"
             st.session_state.custom_question = custom_question
+            st.session_state.phase = 'voting'
             st.rerun()
     else:
         if st.button("Bestätigen (Kategorie)"):
             st.session_state.selected_category = category_choice
+            st.session_state.phase = 'voting'
             st.rerun()
 
-# --- Spielrunde ---
-else:
+# --- Abstimmungsphase ---
+elif st.session_state.phase == 'voting':
     if not st.session_state.current_question:
         if st.session_state.selected_category == "Eigene Frage":
             question = st.session_state.custom_question
@@ -145,68 +149,70 @@ else:
         st.session_state.current_question = (st.session_state.selected_category, question)
         st.session_state.votes = {}
 
-    if st.session_state.current_question:
-        category, question = st.session_state.current_question
-        st.subheader(f"Kategorie: {category}")
-        st.markdown(f"### *{question}*")
+    category, question = st.session_state.current_question
+    st.subheader(f"Kategorie: {category}")
+    st.markdown(f"### *{question}*")
 
-        # Abstimmen lassen
-        for player in st.session_state.players:
-            if player not in st.session_state.votes:
-                options = list(delegation_levels.values())
-                vote_label = st.selectbox(f"{player}, wähle deine Stufe:", options, key=f"vote_{player}")
-                vote_number = int(vote_label.split('.')[0])
-                if st.button(f"Bestätigen ({player})", key=f"confirm_{player}"):
-                    st.session_state.votes[player] = vote_number
-                    st.rerun()
+    for player in st.session_state.players:
+        if player not in st.session_state.votes:
+            options = list(delegation_levels.values())
+            vote_label = st.selectbox(f"{player}, wähle deine Stufe:", options, key=f"vote_{player}")
+            vote_number = int(vote_label.split('.')[0])
+            if st.button(f"Bestätigen ({player})", key=f"confirm_{player}"):
+                st.session_state.votes[player] = vote_number
+                st.rerun()
 
-        if len(st.session_state.votes) == len(st.session_state.players):
-            st.success("Alle Stimmen abgegeben! Ergebnisse freigeben?")
-            if st.button("Aufdecken"):
-                votes = list(st.session_state.votes.values())
-                avg = sum(votes) / len(votes)
-                stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5
-                consensus = len(set(votes)) == 1
+    if len(st.session_state.votes) == len(st.session_state.players):
+        st.success("Alle Stimmen abgegeben! Ergebnisse freigeben?")
+        if st.button("Aufdecken"):
+            st.session_state.phase = 'results'
+            st.rerun()
 
-                st.write("### Ergebnisse")
-                for player, vote in st.session_state.votes.items():
-                    st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
-                st.write(f"Durchschnittliche Stufe: **{avg:.2f}**")
-                st.write(f"Standardabweichung: **{stdev:.2f}**")
-                st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
+# --- Ergebnisphase ---
+elif st.session_state.phase == 'results':
+    category, question = st.session_state.current_question
+    votes = list(st.session_state.votes.values())
+    avg = sum(votes) / len(votes)
+    stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5
+    consensus = len(set(votes)) == 1
 
-                # Diagramm
-                fig, ax = plt.subplots()
-                players = list(st.session_state.votes.keys())
-                scores = list(st.session_state.votes.values())
+    st.write("### Ergebnisse")
+    for player, vote in st.session_state.votes.items():
+        st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
+    st.write(f"Durchschnittliche Stufe: **{avg:.2f}**")
+    st.write(f"Standardabweichung: **{stdev:.2f}**")
+    st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
-                ax.bar(players, scores)
-                ax.set_xlabel('Spieler:innen')
-                ax.set_ylabel('Gewählte Delegationsstufe')
-                ax.set_ylim(0, 8)
-                ax.set_title('Delegationsstufen pro Spieler:in')
-                st.pyplot(fig)
+    fig, ax = plt.subplots()
+    players = list(st.session_state.votes.keys())
+    scores = list(st.session_state.votes.values())
 
-                # Runde ins Log schreiben
-                st.session_state.round_log.append({
-                    'category': category,
-                    'question': question,
-                    'votes': st.session_state.votes.copy(),
-                    'average': avg,
-                    'stdev': stdev,
-                    'consensus': consensus
-                })
+    ax.bar(players, scores)
+    ax.set_xlabel('Spieler:innen')
+    ax.set_ylabel('Gewählte Delegationsstufe')
+    ax.set_ylim(0, 8)
+    ax.set_title('Delegationsstufen pro Spieler:in')
+    st.pyplot(fig)
 
-                # Frage wiederholen → gleiche Frage, neue Abstimmung
-                if st.button("Frage wiederholen"):
-                    st.session_state.votes = {}
-                    st.rerun()
+    st.session_state.round_log.append({
+        'category': category,
+        'question': question,
+        'votes': st.session_state.votes.copy(),
+        'average': avg,
+        'stdev': stdev,
+        'consensus': consensus
+    })
 
-                # Nächste Runde → neue Frage, gleiche Kategorie
-                if st.button("Nächste Runde"):
-                    st.session_state.current_question = None
-                    st.session_state.votes = {}
-                    st.rerun()
+    if st.button("Frage wiederholen"):
+        st.session_state.votes = {}
+        st.session_state.phase = 'voting'
+        st.rerun()
+
+    if st.button("Nächste Runde"):
+        st.session_state.current_question = None
+        st.session_state.votes = {}
+        st.session_state.phase = 'voting'
+        st.rerun()
 
 # --- Immer sichtbare Buttons ---
 if st.button("Neustart"):
