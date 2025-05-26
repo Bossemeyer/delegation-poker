@@ -38,9 +38,13 @@ delegation_levels = {
     7: "7. Du entscheidest komplett eigenständig"
 }
 
-# --- Reset-Funktion ---
-def reset_all_states():
+def reset_all_states(confirm=False):
+    if not confirm:
+        st.session_state.show_reset_dialog = True
+        return
+    # Alles zurücksetzen
     st.session_state.players = []
+    st.session_state.players_lower = set()
     st.session_state.admin = None
     st.session_state.current_question = None
     st.session_state.votes = {}
@@ -50,12 +54,15 @@ def reset_all_states():
     st.session_state.selected_category = None
     st.session_state.custom_question = None
     st.session_state.phase = 'setup'
+    st.session_state.question_history = set()
+    st.session_state.show_reset_dialog = False
     st.rerun()
 
 # --- Session-Init ---
 for key, default in [
     ('intro_shown', False),
     ('players', []),
+    ('players_lower', set()),  # für Namens-Konsistenz
     ('admin', None),
     ('current_question', None),
     ('votes', {}),
@@ -63,7 +70,9 @@ for key, default in [
     ('ready_to_start', False),
     ('selected_category', None),
     ('custom_question', None),
-    ('phase', 'setup')  # NEU: Phasensteuerung
+    ('phase', 'setup'),
+    ('question_history', set()),  # Verwendete Fragen
+    ('show_reset_dialog', False)
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -107,15 +116,28 @@ if st.session_state.phase == 'setup':
 # --- Spieler:innen-Login ---
 elif st.session_state.phase == 'login':
     st.header("Spieler:innen anmelden")
-    name = st.text_input("Name eingeben:")
-    if st.button("Hinzufügen"):
-        if name and name not in st.session_state.players:
-            st.session_state.players.append(name)
-            if not st.session_state.admin:
-                st.session_state.admin = name
+
+    with st.form(key="name_form", clear_on_submit=True):
+        name = st.text_input("Name eingeben:", value="")
+        submitted = st.form_submit_button("Hinzufügen")
+        if submitted:
+            name_clean = name.strip()
+            name_lower = name_clean.lower()
+            if name_clean == "":
+                st.warning("Bitte einen Namen eingeben.")
+            elif name_lower in st.session_state.players_lower:
+                st.warning("Name bereits vergeben! Bitte anderen Namen wählen.")
+            else:
+                st.session_state.players.append(name_clean)
+                st.session_state.players_lower.add(name_lower)
+                if not st.session_state.admin:
+                    st.session_state.admin = name_clean
+                st.success(f"{name_clean} hinzugefügt.")
+
     st.write("Angemeldete Spieler:innen:", ", ".join(st.session_state.players))
     if st.session_state.admin:
         st.write(f"**Admin:** {st.session_state.admin}")
+
     if st.button("Zur Kategorie-Auswahl", disabled=(len(st.session_state.players) < 1)):
         st.session_state.phase = 'category'
         st.rerun()
@@ -141,11 +163,22 @@ elif st.session_state.phase == 'category':
 
 # --- Abstimmungsphase ---
 elif st.session_state.phase == 'voting':
+    # Question-History: keine Frage doppelt in der Session
     if not st.session_state.current_question:
         if st.session_state.selected_category == "Eigene Frage":
             question = st.session_state.custom_question
         else:
-            question = random.choice(delegation_questions[st.session_state.selected_category])
+            # Fragen, die noch nicht benutzt wurden:
+            all_qs = [q for q in delegation_questions[st.session_state.selected_category]
+                      if (st.session_state.selected_category, q) not in st.session_state.question_history]
+            if not all_qs:
+                st.info("Alle Fragen dieser Kategorie wurden schon gestellt. Wähle eine andere Kategorie oder stelle eine eigene Frage.")
+                if st.button("Zurück zur Kategorie-Auswahl"):
+                    st.session_state.phase = 'category'
+                    st.session_state.current_question = None
+                    st.rerun()
+                st.stop()
+            question = random.choice(all_qs)
         st.session_state.current_question = (st.session_state.selected_category, question)
         st.session_state.votes = {}
 
@@ -173,7 +206,7 @@ elif st.session_state.phase == 'results':
     category, question = st.session_state.current_question
     votes = list(st.session_state.votes.values())
     avg = sum(votes) / len(votes)
-    stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5
+    stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5 if len(votes) > 1 else 0.0
     consensus = len(set(votes)) == 1
 
     st.write("### Ergebnisse")
@@ -183,16 +216,21 @@ elif st.session_state.phase == 'results':
     st.write(f"Standardabweichung: **{stdev:.2f}**")
     st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
+    # Visualisierung
     fig, ax = plt.subplots()
     players = list(st.session_state.votes.keys())
     scores = list(st.session_state.votes.values())
-
     ax.bar(players, scores)
     ax.set_xlabel('Spieler:innen')
     ax.set_ylabel('Gewählte Delegationsstufe')
     ax.set_ylim(0, 8)
     ax.set_title('Delegationsstufen pro Spieler:in')
+    plt.xticks(rotation=30, ha='right')
     st.pyplot(fig)
+
+    # Frage als benutzt markieren
+    if (category, question) not in st.session_state.question_history:
+        st.session_state.question_history.add((category, question))
 
     st.session_state.round_log.append({
         'category': category,
@@ -214,10 +252,20 @@ elif st.session_state.phase == 'results':
         st.session_state.phase = 'voting'
         st.rerun()
 
-# --- Immer sichtbare Buttons ---
-if st.button("Neustart"):
-    reset_all_states()
+# --- Immer sichtbare Buttons und Reset-Dialog ---
+if st.session_state.show_reset_dialog:
+    st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
+    col1, col2 = st.columns(2)
+    if col1.button("Ja, alles zurücksetzen"):
+        reset_all_states(confirm=True)
+    if col2.button("Abbrechen"):
+        st.session_state.show_reset_dialog = False
+        st.rerun()
+else:
+    if st.button("Neustart"):
+        reset_all_states(confirm=False)
 
+# --- Download Ergebnisse ---
 if st.session_state.round_log:
     df = pd.DataFrame([
         {
