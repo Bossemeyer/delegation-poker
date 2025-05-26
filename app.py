@@ -102,11 +102,11 @@ for key, default in [
 
 # --- Einleitung ---
 if st.session_state.phase == 'setup':
-    st.title("Delegation Poker (Admin gesteuert)")
+    st.title("Delegation Poker")
 
     st.markdown(
         """
-        ## Was ist Delegation Poker?
+        ### Was ist Delegation Poker?
         Delegation Poker ist ein spielerisches Tool, mit dem Teams klären, **wie viel Entscheidungsfreiheit** einzelne Teammitglieder:innen bei bestimmten Themen haben.
         Ziel ist es, Transparenz zu schaffen: Wer entscheidet was? Und auf welcher Delegationsebene?
 
@@ -123,9 +123,9 @@ if st.session_state.phase == 'setup':
         - In jeder Runde wird eine Frage gestellt, z. B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-        - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7).
+        - Alle Spieler:innen wählen verdeckt ihre Einschätzung im Chat von Teams (Stufe 1–7).
 
-        - Danach werden die Ergebnisse sichtbar gemacht und gemeinsam besprochen.
+        - Wenn alle ihre Einschätzung vorgenommen haben, wird der Eintrag im Chat gesendet und gemeinsam besprochen.
 
         ### Ziel
         Am Ende habt ihr ein besseres Verständnis davon, wie Verantwortung und Entscheidungen im Team verteilt sind – und wo ihr vielleicht etwas anpassen wollt.
