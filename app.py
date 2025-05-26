@@ -27,7 +27,9 @@ delegation_questions = {
     ]
 }
 
-# Session State
+# Session State initialisieren
+if 'intro_shown' not in st.session_state:
+    st.session_state.intro_shown = False
 if 'players' not in st.session_state:
     st.session_state.players = []
 if 'admin' not in st.session_state:
@@ -39,10 +41,42 @@ if 'votes' not in st.session_state:
 if 'round_log' not in st.session_state:
     st.session_state.round_log = []
 
-st.title("Delegation Poker (Admin gesteuert)")
+# --- Einleitung ---
+if not st.session_state.intro_shown:
+    st.title("Delegation Poker (Admin gesteuert)")
+
+    st.markdown("""
+    ## 🃏 Delegation Poker – Was ist das?
+    Delegation Poker ist ein spielerisches Tool, mit dem Teams klären, **wie viel Entscheidungsfreiheit** einzelne Teammitglieder:innen bei bestimmten Themen haben.
+    Ziel ist es, Transparenz zu schaffen: Wer entscheidet was? Und auf welcher Delegationsebene?
+
+    ### 🔑 Wie funktioniert es?
+    - Es gibt **7 Delegationsebenen**:
+      1️⃣ Ich entscheide allein.  
+      2️⃣ Ich entscheide und erkläre dir meine Gründe.  
+      3️⃣ Ich entscheide, hole mir vorher aber deine Meinung ein.  
+      4️⃣ Wir entscheiden gemeinsam.  
+      5️⃣ Du entscheidest, nachdem du meinen Rat gehört hast.  
+      6️⃣ Du entscheidest, informierst mich aber.  
+      7️⃣ Du entscheidest komplett eigenständig.
+
+    - In jeder Runde wird eine Frage gestellt, z. B.:  
+    **„Wer entscheidet, ob neue Softwaretools angeschafft werden?“**
+
+    - Alle Spieler:innen wählen **verdeckt** ihre Einschätzung (Stufe 1–7).
+
+    - Danach werden die Ergebnisse sichtbar gemacht und gemeinsam besprochen.
+
+    ### 🎯 Ziel
+    Am Ende habt ihr ein besseres Verständnis davon, wie Verantwortung und Entscheidungen im Team verteilt sind – und wo ihr vielleicht etwas anpassen wollt.
+    """)
+
+    if st.button("Loslegen"):
+        st.session_state.intro_shown = True
+        st.experimental_rerun()
 
 # --- Spieler:innen-Login + Admin-Definition ---
-if not st.session_state.players:
+elif not st.session_state.players:
     st.header("Spieler:innen anmelden")
     name = st.text_input("Name eingeben:")
     if st.button("Hinzufügen"):
@@ -123,6 +157,7 @@ else:
                     st.session_state.current_question = None
                     st.session_state.votes = {}
                     st.session_state.round_log = []
+                    st.session_state.intro_shown = False
                     st.experimental_rerun()
 
 # --- Export-Button ---
