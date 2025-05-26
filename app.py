@@ -164,7 +164,7 @@ else:
                 st.write(f"Standardabweichung: **{stdev:.2f}**")
                 st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
-                # Neues Diagramm: Spielernamen auf X-Achse, Stufen auf Y-Achse
+                # Diagramm: Spielernamen X-Achse, Stufen Y-Achse
                 fig, ax = plt.subplots()
                 players = list(st.session_state.votes.keys())
                 scores = list(st.session_state.votes.values())
@@ -185,6 +185,11 @@ else:
                     'stdev': stdev,
                     'consensus': consensus
                 })
+
+                # Buttons
+                if st.button("Frage wiederholen"):
+                    st.session_state.votes = {}
+                    st.rerun()
 
                 if st.button("Nächste Runde"):
                     st.session_state.current_question = None
