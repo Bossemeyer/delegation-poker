@@ -3,22 +3,12 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# --- Logo im Kopfbereich linksbündig ---
-logo_path = "Y-SiTE Logo.png"  # Exakt so wie im Repo!
-st.markdown(
-    f"""
-    <div style="display: flex; align-items: flex-start;">
-        <img src="data:image/png;base64,{st.file_uploader(logo_path).getvalue().decode('utf-8') if st.file_uploader(logo_path) else ''}" width="120" style="margin-right: 16px;" />
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-# Falls du Fehler mit obigem Code bekommst, verwende die Standardmethode:
+# --- Logo im Kopfbereich, linksbündig ---
+logo_path = "Y-SiTE Logo.png"
 try:
     st.image(logo_path, width=120)
 except Exception:
     st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
-
 
 # --- Fragenstruktur (je Kategorie 5 Fragen) ---
 delegation_questions = {
@@ -361,13 +351,6 @@ if st.session_state.round_log:
 
 # --- Branding und Footer ---
 st.markdown("---")
-
-# Logo einbinden (lokale Datei im GitHub-Repo, z. B. Y-SiTE Logo.png)
-logo_path = "Y-SiTE Logo.png"  # ← Dateiname genau so wie in deinem GitHub-Repo!
-try:
-    st.image(logo_path, width=120)
-except Exception:
-    st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
 
 st.markdown(
     """
