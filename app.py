@@ -3,27 +3,42 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# --- Fragenstruktur ---
+# --- Fragenstruktur (je Kategorie 5 Fragen) ---
 delegation_questions = {
     "Strategische Ausrichtung": [
         "Wer entscheidet, ob wir in einen neuen Markt eintreten?",
-        "Wer entscheidet, ob wir unser Leistungsportfolio erweitern?"
+        "Wer entscheidet, ob wir unser Leistungsportfolio erweitern?",
+        "Wer entscheidet, welche Vision oder Leitbild das Unternehmen verfolgt?",
+        "Wer entscheidet, ob Kooperationen mit externen Partner:innen eingegangen werden?",
+        "Wer entscheidet, wann und wie neue Geschäftsmodelle getestet werden?"
     ],
     "Meeting & Organisation": [
         "Wer entscheidet, welche Themen auf die Meeting-Agenda kommen?",
-        "Wer entscheidet, wer an einem bestimmten Meeting teilnehmen soll?"
+        "Wer entscheidet, wer an einem bestimmten Meeting teilnehmen soll?",
+        "Wer entscheidet, wie oft und in welchem Rhythmus Teammeetings stattfinden?",
+        "Wer entscheidet, ob ein Meeting vor Ort oder remote durchgeführt wird?",
+        "Wer entscheidet, welche Tools für die interne Zusammenarbeit genutzt werden?"
     ],
     "Kunden & Markt": [
         "Wer entscheidet, wie wir auf eine Kundenbeschwerde reagieren?",
-        "Wer entscheidet, welche Kund:innen wir priorisieren?"
+        "Wer entscheidet, welche Kund:innen wir priorisieren?",
+        "Wer entscheidet, welche Angebote oder Aktionen für Kund:innen entwickelt werden?",
+        "Wer entscheidet, wie Feedback von Kund:innen ausgewertet und genutzt wird?",
+        "Wer entscheidet, wie wir mit besonders herausfordernden Kund:innen umgehen?"
     ],
     "Ressourcen & Personal": [
         "Wer entscheidet, wie Aufgaben im Team verteilt werden?",
-        "Wer entscheidet, wer welches Projekt übernimmt?"
+        "Wer entscheidet, wer welches Projekt übernimmt?",
+        "Wer entscheidet, wie die Urlaubsplanung im Team abläuft?",
+        "Wer entscheidet, wer an Weiterbildungen oder Schulungen teilnimmt?",
+        "Wer entscheidet, wie neue Kolleg:innen ins Team integriert werden?"
     ],
     "Finanzen & Tools": [
         "Wer entscheidet, ob neue Softwaretools angeschafft werden?",
-        "Wer entscheidet, wie das Team-Budget aufgeteilt wird?"
+        "Wer entscheidet, wie das Team-Budget aufgeteilt wird?",
+        "Wer entscheidet, ob größere Investitionen (z. B. Hardware, Ausstattung) getätigt werden?",
+        "Wer entscheidet, wie Reisekosten oder Spesen im Team genehmigt werden?",
+        "Wer entscheidet, welche finanziellen Ressourcen für Team-Events oder Incentives eingesetzt werden?"
     ]
 }
 
@@ -42,7 +57,6 @@ def reset_all_states(confirm=False):
     if not confirm:
         st.session_state.show_reset_dialog = True
         return
-    # Alles zurücksetzen
     st.session_state.players = []
     st.session_state.players_lower = set()
     st.session_state.admin = None
@@ -161,30 +175,43 @@ elif st.session_state.phase == 'category':
             st.session_state.phase = 'voting'
             st.rerun()
 
-# --- Abstimmungsphase ---
+# --- Abstimmungsphase mit "Nächste Frage"-Option ---
 elif st.session_state.phase == 'voting':
-    # Question-History: keine Frage doppelt in der Session
-    if not st.session_state.current_question:
+    def get_next_question():
         if st.session_state.selected_category == "Eigene Frage":
-            question = st.session_state.custom_question
+            return st.session_state.custom_question
         else:
-            # Fragen, die noch nicht benutzt wurden:
             all_qs = [q for q in delegation_questions[st.session_state.selected_category]
                       if (st.session_state.selected_category, q) not in st.session_state.question_history]
-            if not all_qs:
-                st.info("Alle Fragen dieser Kategorie wurden schon gestellt. Wähle eine andere Kategorie oder stelle eine eigene Frage.")
-                if st.button("Zurück zur Kategorie-Auswahl"):
-                    st.session_state.phase = 'category'
-                    st.session_state.current_question = None
-                    st.rerun()
-                st.stop()
-            question = random.choice(all_qs)
+            return random.choice(all_qs) if all_qs else None
+
+    # Frage initialisieren oder nächste Frage ziehen
+    if not st.session_state.current_question:
+        question = get_next_question()
+        if question is None:
+            st.info("Alle Fragen dieser Kategorie wurden schon gestellt. Wähle eine andere Kategorie oder stelle eine eigene Frage.")
+            if st.button("Zurück zur Kategorie-Auswahl"):
+                st.session_state.phase = 'category'
+                st.session_state.current_question = None
+                st.rerun()
+            st.stop()
         st.session_state.current_question = (st.session_state.selected_category, question)
         st.session_state.votes = {}
 
     category, question = st.session_state.current_question
     st.subheader(f"Kategorie: {category}")
     st.markdown(f"### *{question}*")
+
+    # Button für nächste Frage, falls noch keine Stimmen abgegeben wurden
+    if not st.session_state.votes and st.session_state.selected_category != "Eigene Frage":
+        all_qs = [q for q in delegation_questions[st.session_state.selected_category]
+                  if (st.session_state.selected_category, q) not in st.session_state.question_history and q != question]
+        if all_qs:
+            if st.button("Nächste Frage"):
+                new_question = random.choice(all_qs)
+                st.session_state.current_question = (st.session_state.selected_category, new_question)
+                # votes bleibt leer
+                st.rerun()
 
     for player in st.session_state.players:
         if player not in st.session_state.votes:
