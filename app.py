@@ -69,6 +69,7 @@ if not st.session_state.intro_shown:
 
     ### Wie funktioniert es?
     - Es gibt 7 Delegationsebenen:
+
       1. Ich entscheide allein  
       2. Ich entscheide und erkläre dir meine Gründe  
       3. Ich entscheide, hole mir vorher aber deine Meinung ein  
