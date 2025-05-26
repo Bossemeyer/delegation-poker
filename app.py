@@ -69,7 +69,6 @@ if not st.session_state.intro_shown:
 
     ### Wie funktioniert es?
     - Es gibt 7 Delegationsebenen:
-
       1. Ich entscheide allein  
       2. Ich entscheide und erkläre dir meine Gründe  
       3. Ich entscheide, hole mir vorher aber deine Meinung ein  
@@ -128,10 +127,7 @@ elif not st.session_state.selected_category:
 
 # --- Spielrunde ---
 else:
-    st.sidebar.write(f"**Admin:** {st.session_state.admin}")
-    is_admin = st.sidebar.text_input("Admin-Check (Name eingeben):") == st.session_state.admin
-
-    if not st.session_state.current_question and is_admin:
+    if not st.session_state.current_question:
         if st.session_state.selected_category == "Eigene Frage":
             question = st.session_state.custom_question
         else:
@@ -153,9 +149,9 @@ else:
                     st.session_state.votes[player] = vote_number
                     st.rerun()
 
-        if len(st.session_state.votes) == len(st.session_state.players) and is_admin:
+        if len(st.session_state.votes) == len(st.session_state.players):
             st.success("Alle Stimmen abgegeben! Ergebnisse freigeben?")
-            if st.button("Aufdecken (Admin)"):
+            if st.button("Aufdecken"):
                 votes = list(st.session_state.votes.values())
                 avg = sum(votes) / len(votes)
                 stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5
@@ -204,7 +200,7 @@ else:
                     st.rerun()
 
 # --- Export-Button ---
-if st.session_state.round_log and is_admin:
+if st.session_state.round_log:
     df = pd.DataFrame([
         {
             'Kategorie': r['category'],
