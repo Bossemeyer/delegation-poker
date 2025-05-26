@@ -70,13 +70,14 @@ def reset_all_states(confirm=False):
     st.session_state.phase = 'setup'
     st.session_state.question_history = set()
     st.session_state.show_reset_dialog = False
+    st.session_state.show_protocol = False
     st.rerun()
 
 # --- Session-Init ---
 for key, default in [
     ('intro_shown', False),
     ('players', []),
-    ('players_lower', set()),  # für Namens-Konsistenz
+    ('players_lower', set()),
     ('admin', None),
     ('current_question', None),
     ('votes', {}),
@@ -85,8 +86,9 @@ for key, default in [
     ('selected_category', None),
     ('custom_question', None),
     ('phase', 'setup'),
-    ('question_history', set()),  # Verwendete Fragen
-    ('show_reset_dialog', False)
+    ('question_history', set()),
+    ('show_reset_dialog', False),
+    ('show_protocol', False)
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -175,7 +177,7 @@ elif st.session_state.phase == 'category':
             st.session_state.phase = 'voting'
             st.rerun()
 
-# --- Abstimmungsphase mit "Nächste Frage"-Option ---
+# --- Abstimmungsphase mit "Nächste Frage" und "Neue Kategorie" ---
 elif st.session_state.phase == 'voting':
     def get_next_question():
         if st.session_state.selected_category == "Eigene Frage":
@@ -202,15 +204,20 @@ elif st.session_state.phase == 'voting':
     st.subheader(f"Kategorie: {category}")
     st.markdown(f"### *{question}*")
 
-    # Button für nächste Frage, falls noch keine Stimmen abgegeben wurden
+    # Buttons für nächste Frage & neue Kategorie, solange keine Stimmen abgegeben wurden
     if not st.session_state.votes and st.session_state.selected_category != "Eigene Frage":
+        colA, colB = st.columns(2)
         all_qs = [q for q in delegation_questions[st.session_state.selected_category]
                   if (st.session_state.selected_category, q) not in st.session_state.question_history and q != question]
-        if all_qs:
-            if st.button("Nächste Frage"):
+        with colA:
+            if all_qs and st.button("Nächste Frage"):
                 new_question = random.choice(all_qs)
                 st.session_state.current_question = (st.session_state.selected_category, new_question)
-                # votes bleibt leer
+                st.rerun()
+        with colB:
+            if st.button("Neue Kategorie"):
+                st.session_state.current_question = None
+                st.session_state.phase = 'category'
                 st.rerun()
 
     for player in st.session_state.players:
@@ -307,3 +314,50 @@ if st.session_state.round_log:
     ])
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download Ergebnisse (CSV)", data=csv, file_name='delegation_poker_results.csv', mime='text/csv')
+
+# --- Protokoll / Übersicht aller geklärten Delegationspunkte ---
+if st.session_state.round_log:
+    if 'show_protocol' not in st.session_state:
+        st.session_state['show_protocol'] = False
+
+    # Button zum Protokoll ein- und ausblenden
+    if not st.session_state['show_protocol']:
+        if st.button("Spiel beenden & Protokoll anzeigen"):
+            st.session_state['show_protocol'] = True
+            st.rerun()
+    else:
+        st.markdown("## Protokoll aller geklärten Delegationspunkte")
+        for i, r in enumerate(st.session_state.round_log, 1):
+            st.markdown(f"""
+            **{i}. {r['category']}**  
+            *{r['question']}*
+
+            - Durchschnittliche Stufe: **{r['average']:.2f}**
+            - Standardabweichung: **{r['stdev']:.2f}**
+            - Konsens: **{'Ja' if r['consensus'] else 'Nein'}**
+            - Stimmen: {", ".join(f"{k}: {v}" for k, v in r['votes'].items())}
+            ---
+            """)
+        if st.button("Protokoll ausblenden"):
+            st.session_state['show_protocol'] = False
+            st.rerun()
+
+# --- Branding und Footer ---
+st.markdown("---")
+
+# Logo einbinden (lokale Datei im GitHub-Repo, z. B. Y-SiTE Logo.png)
+logo_path = "Y-SiTE Logo.png"  # ← Dateiname genau so wie in deinem GitHub-Repo!
+try:
+    st.image(logo_path, width=120)
+except Exception:
+    st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
+
+st.markdown(
+    """
+    <div style='text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;'>
+        <b>Powered by Y-SiTE</b>, Y-Bindestrich C-Tab geschrieben<br>
+        Lars Bossemeyer
+    </div>
+    """,
+    unsafe_allow_html=True
+)
