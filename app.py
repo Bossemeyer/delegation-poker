@@ -245,19 +245,12 @@ elif st.session_state.phase == 'voting':
 # --- Ergebnisphase ---
 elif st.session_state.phase == 'results':
     category, question = st.session_state.current_question
-    votes = list(st.session_state.votes.values())
-    avg = sum(votes) / len(votes)
-    stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5 if len(votes) > 1 else 0.0
-    consensus = len(set(votes)) == 1
 
     st.write("### Ergebnisse")
     for player, vote in st.session_state.votes.items():
         st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
-    st.write(f"Durchschnittliche Stufe: **{avg:.2f}**")
-    st.write(f"Standardabweichung: **{stdev:.2f}**")
-    st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
 
-    # Visualisierung
+    # Visualisierung bleibt optional
     fig, ax = plt.subplots()
     players = list(st.session_state.votes.keys())
     scores = list(st.session_state.votes.values())
@@ -276,10 +269,7 @@ elif st.session_state.phase == 'results':
     st.session_state.round_log.append({
         'category': category,
         'question': question,
-        'votes': st.session_state.votes.copy(),
-        'average': avg,
-        'stdev': stdev,
-        'consensus': consensus
+        'votes': st.session_state.votes.copy()
     })
 
     if st.button("Frage wiederholen"):
@@ -315,9 +305,6 @@ if st.session_state.round_log:
         {
             'Kategorie': r['category'],
             'Frage': r['question'],
-            'Durchschnitt': r['average'],
-            'Standardabweichung': r['stdev'],
-            'Konsens': r['consensus'],
             'Votes': ", ".join(f"{k}: {v}" for k, v in r['votes'].items())
         }
         for r in st.session_state.round_log
@@ -342,9 +329,6 @@ if st.session_state.round_log:
             **{i}. {r['category']}**  
             *{r['question']}*
 
-            - Durchschnittliche Stufe: **{r['average']:.2f}**
-            - Standardabweichung: **{r['stdev']:.2f}**
-            - Konsens: **{'Ja' if r['consensus'] else 'Nein'}**
             - Stimmen: {", ".join(f"{k}: {v}" for k, v in r['votes'].items())}
             ---
             """)
