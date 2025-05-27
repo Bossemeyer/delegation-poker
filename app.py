@@ -289,15 +289,18 @@ elif st.session_state.phase == 'results':
 # --- Immer sichtbare Buttons und Reset-Dialog ---
 if st.session_state.show_reset_dialog:
     st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1, 1])
     if col1.button("Ja, alles zurücksetzen"):
         reset_all_states(confirm=True)
     if col2.button("Abbrechen"):
         st.session_state.show_reset_dialog = False
         st.rerun()
 else:
-    if st.button("Neustart"):
-        reset_all_states(confirm=False)
+    # Button rechts oben im Hauptbereich platzieren
+    cols = st.columns([8, 1])  # 8/9 der Breite leer, Button ganz rechts
+    with cols[1]:
+        if st.button("Neustart"):
+            reset_all_states(confirm=False)
 
 # --- Download Ergebnisse (finale Version pro Frage) ---
 if st.session_state.round_log:
