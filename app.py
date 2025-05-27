@@ -123,9 +123,9 @@ if st.session_state.phase == 'setup':
         - In jeder Runde wird eine Frage gestellt, z.B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-        - Alle Spieler:innen wählen verdeckt ihre Einschätzung im Chat von Teams (Stufe 1–7).
+        - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7).
 
-        - Wenn alle ihre Einschätzung vorgenommen haben, wird der Eintrag im Chat gesendet und gemeinsam besprochen.
+        - Wenn alle ihre Einschätzung vorgenommen haben, werden die Einträge angezeigt und gemeinsam besprochen.
 
         ### Ziel
         Am Ende habt ihr ein besseres Verständnis davon, wie Verantwortung und Entscheidungen im Team verteilt sind – und wo ihr vielleicht etwas anpassen wollt.
@@ -248,7 +248,7 @@ elif st.session_state.phase == 'results':
 
     st.write("### Ergebnisse")
     for player, vote in st.session_state.votes.items():
-        st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
+        st.write(f"{player}: {vote} ({delegation_levels[vote]})")
 
     # Visualisierung bleibt optional
     fig, ax = plt.subplots()
@@ -299,39 +299,52 @@ else:
     if st.button("Neustart"):
         reset_all_states(confirm=False)
 
-# --- Download Ergebnisse ---
+# --- Download Ergebnisse (finale Version pro Frage) ---
 if st.session_state.round_log:
+    final_questions = {}
+    for r in st.session_state.round_log:
+        key = (r['category'], r['question'])
+        final_questions[key] = r  # Immer der letzte Stand überschreibt vorherige
+
     df = pd.DataFrame([
         {
             'Kategorie': r['category'],
             'Frage': r['question'],
-            'Votes': ", ".join(f"{k}: {v}" for k, v in r['votes'].items())
+            'Votes': ", ".join(f"{k}: {v} ({delegation_levels[v]})" for k, v in r['votes'].items())
         }
-        for r in st.session_state.round_log
+        for r in final_questions.values()
     ])
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download Ergebnisse (CSV)", data=csv, file_name='delegation_poker_results.csv', mime='text/csv')
 
-# --- Protokoll / Übersicht aller geklärten Delegationspunkte ---
+# --- Protokoll / Übersicht aller geklärten Delegationspunkte (ohne Dopplungen, nur letzter Stand) ---
 if st.session_state.round_log:
+    final_questions = {}
+    for r in st.session_state.round_log:
+        key = (r['category'], r['question'])
+        final_questions[key] = r  # Immer der letzte Stand überschreibt vorherige
+
     if 'show_protocol' not in st.session_state:
         st.session_state['show_protocol'] = False
 
-    # Button zum Protokoll ein- und ausblenden
     if not st.session_state['show_protocol']:
         if st.button("Spiel beenden & Protokoll anzeigen"):
             st.session_state['show_protocol'] = True
             st.rerun()
     else:
-        st.markdown("## Protokoll aller geklärten Delegationspunkte")
-        for i, r in enumerate(st.session_state.round_log, 1):
+        st.markdown("## Protokoll aller geklärten Delegationspunkte (finale Version pro Frage)")
+        for i, ((category, question), r) in enumerate(final_questions.items(), 1):
             st.markdown(f"""
-            **{i}. {r['category']}**  
-            *{r['question']}*
+            **{i}. {category}**  
+            *{question}*
 
-            - Stimmen: {", ".join(f"{k}: {v}" for k, v in r['votes'].items())}
-            ---
+            - Stimmen:
             """)
+            for player, vote in r['votes'].items():
+                st.markdown(
+                    f"  - {player}: {vote} ({delegation_levels[vote]})"
+                )
+            st.markdown("---")
         if st.button("Protokoll ausblenden"):
             st.session_state['show_protocol'] = False
             st.rerun()
