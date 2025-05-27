@@ -119,6 +119,7 @@ if st.session_state.phase == 'setup':
           5. Du entscheidest, nachdem du meinen Rat gehört hast  
           6. Du entscheidest, informierst mich aber  
           7. Du entscheidest komplett eigenständig
+          
 
         - In jeder Runde wird eine Frage gestellt, z.B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
@@ -358,7 +359,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;'>
-        <b>Powered by with wine & ChatGpt 4.1 - Y-SiTE - Lars Bossemeyer
+        <b>Powered very relaxed with wine & ChatGpt 4.1 Vibe-Coding - Y-SiTE - Lars Bossemeyer
     </div>
     """,
     unsafe_allow_html=True
