@@ -3,6 +3,33 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# --- Custom Button Styles via CSS ---
+st.markdown("""
+<style>
+/* Standard-Button: grün auf Hover und Aktiv */
+div.stButton > button:not(.neu-start-btn):hover,
+div.stButton > button:not(.neu-start-btn):focus,
+div.stButton > button:not(.neu-start-btn):active {
+    background-color: #1ec94c !important;
+    color: white !important;
+    border-color: #1ec94c !important;
+}
+/* Neu-Start-Button: rot auch auf Hover/Aktiv */
+.neu-start-btn {
+    background-color: #fa5252 !important;
+    color: white !important;
+    border-color: #fa5252 !important;
+}
+.neu-start-btn:hover,
+.neu-start-btn:focus,
+.neu-start-btn:active {
+    background-color: #c92a2a !important;
+    border-color: #c92a2a !important;
+    color: white !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Logo im Kopfbereich, linksbündig ---
 logo_path = "Y-SiTE Logo.png"
 try:
@@ -99,6 +126,34 @@ for key, default in [
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
+
+# --- Immer sichtbare Buttons und Reset-Dialog (Neu-Start-Button ganz rechts und rot) ---
+cols = st.columns([8, 1])  # Button ganz rechts oben
+with cols[1]:
+    # Der "Neu-Start"-Button bekommt die eigene CSS-Klasse über unsafe_allow_html
+    # Achtung: Die Button-Klasse muss nach dem Rendern mit JavaScript gesetzt werden (Workaround)
+    st.markdown("""
+    <script>
+    // Finde alle Buttons und setze die Klasse nur beim Button mit "Neu-Start"
+    Array.from(document.querySelectorAll('button')).forEach(btn => {
+        if (btn.innerText.trim() === "Neu-Start") {
+            btn.classList.add('neu-start-btn');
+        }
+    });
+    </script>
+    """, unsafe_allow_html=True)
+    if st.button("Neu-Start", key="neu_start_button"):
+        reset_all_states(confirm=False)
+
+# --- Reset-Dialog (weiter unten, weil der Button immer sichtbar sein soll) ---
+if st.session_state.show_reset_dialog:
+    st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
+    col1, col2 = st.columns([1, 1])
+    if col1.button("Ja, alles zurücksetzen"):
+        reset_all_states(confirm=True)
+    if col2.button("Abbrechen"):
+        st.session_state.show_reset_dialog = False
+        st.rerun()
 
 # --- Einleitung ---
 if st.session_state.phase == 'setup':
@@ -285,22 +340,6 @@ elif st.session_state.phase == 'results':
         else:
             st.session_state.phase = 'voting'
         st.rerun()
-
-# --- Immer sichtbare Buttons und Reset-Dialog ---
-if st.session_state.show_reset_dialog:
-    st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
-    col1, col2 = st.columns([1, 1])
-    if col1.button("Ja, alles zurücksetzen"):
-        reset_all_states(confirm=True)
-    if col2.button("Abbrechen"):
-        st.session_state.show_reset_dialog = False
-        st.rerun()
-else:
-    # Button rechts oben im Hauptbereich platzieren
-    cols = st.columns([8, 1])  # 8/9 der Breite leer, Button ganz rechts
-    with cols[1]:
-        if st.button("Neustart"):
-            reset_all_states(confirm=False)
 
 # --- Download Ergebnisse (finale Version pro Frage) ---
 if st.session_state.round_log:
