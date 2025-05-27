@@ -3,7 +3,7 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# --- Custom Button Styles via CSS ---
+# --- Custom Button Styles & Logo-Zentrierung via CSS ---
 st.markdown("""
 <style>
 /* Standard-Button: grün auf Hover und Aktiv */
@@ -27,15 +27,23 @@ div.stButton > button:not(.neu-start-btn):active {
     border-color: #c92a2a !important;
     color: white !important;
 }
+/* Logo zentrieren */
+.logo-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Logo im Kopfbereich, linksbündig ---
+# --- Logo zentriert und groß ---
 logo_path = "Y-SiTE Logo.png"
+st.markdown('<div class="logo-center">', unsafe_allow_html=True)
 try:
-    st.image(logo_path, width=820)
+    st.image(logo_path, use_column_width=False, width=820)
 except Exception:
     st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Fragenstruktur (je Kategorie 5 Fragen) ---
 delegation_questions = {
@@ -127,25 +135,24 @@ for key, default in [
     if key not in st.session_state:
         st.session_state[key] = default
 
-# --- Immer sichtbare Buttons und Reset-Dialog (Neu-Start-Button ganz rechts und rot) ---
-cols = st.columns([8, 1])  # Button ganz rechts oben
-with cols[1]:
-    # Der "Neu-Start"-Button bekommt die eigene CSS-Klasse über unsafe_allow_html
-    # Achtung: Die Button-Klasse muss nach dem Rendern mit JavaScript gesetzt werden (Workaround)
-    st.markdown("""
-    <script>
-    // Finde alle Buttons und setze die Klasse nur beim Button mit "Neu-Start"
-    Array.from(document.querySelectorAll('button')).forEach(btn => {
-        if (btn.innerText.trim() === "Neu-Start") {
-            btn.classList.add('neu-start-btn');
-        }
-    });
-    </script>
-    """, unsafe_allow_html=True)
-    if st.button("Neu-Start", key="neu_start_button"):
-        reset_all_states(confirm=False)
+# --- Neu-Start-Button (ganz rechts, aber NICHT auf der Startseite) ---
+if st.session_state.phase != 'setup':
+    cols = st.columns([8, 1])  # Button ganz rechts oben
+    with cols[1]:
+        # Der "Neu-Start"-Button bekommt die eigene CSS-Klasse über unsafe_allow_html (per JS nachträglich)
+        st.markdown("""
+        <script>
+        Array.from(document.querySelectorAll('button')).forEach(btn => {
+            if (btn.innerText.trim() === "Neu-Start") {
+                btn.classList.add('neu-start-btn');
+            }
+        });
+        </script>
+        """, unsafe_allow_html=True)
+        if st.button("Neu-Start", key="neu_start_button"):
+            reset_all_states(confirm=False)
 
-# --- Reset-Dialog (weiter unten, weil der Button immer sichtbar sein soll) ---
+# --- Reset-Dialog (bleibt überall erreichbar, wenn nötig) ---
 if st.session_state.show_reset_dialog:
     st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
     col1, col2 = st.columns([1, 1])
