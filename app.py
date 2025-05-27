@@ -33,7 +33,7 @@ div.stButton > button:not(.neu-start-btn):active {
 # --- Logo im Kopfbereich, linksbündig ---
 logo_path = "Y-SiTE Logo.png"
 try:
-    st.image(logo_path, width=120)
+    st.image(logo_path, width=820)
 except Exception:
     st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
 
