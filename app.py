@@ -3,12 +3,47 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# --- Logo im Kopfbereich, linksbündig ---
+# --- Custom Button Styles & Logo-Zentrierung via CSS ---
+st.markdown("""
+<style>
+/* Standard-Button: grün auf Hover und Aktiv */
+div.stButton > button:not(.neu-start-btn):hover,
+div.stButton > button:not(.neu-start-btn):focus,
+div.stButton > button:not(.neu-start-btn):active {
+    background-color: #1ec94c !important;
+    color: white !important;
+    border-color: #1ec94c !important;
+}
+/* Neu-Start-Button: rot auch auf Hover/Aktiv */
+.neu-start-btn {
+    background-color: #fa5252 !important;
+    color: white !important;
+    border-color: #fa5252 !important;
+}
+.neu-start-btn:hover,
+.neu-start-btn:focus,
+.neu-start-btn:active {
+    background-color: #c92a2a !important;
+    border-color: #c92a2a !important;
+    color: white !important;
+}
+/* Logo zentrieren */
+.logo-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- Logo zentriert und groß ---
 logo_path = "Y-SiTE Logo.png"
+st.markdown('<div class="logo-center">', unsafe_allow_html=True)
 try:
-    st.image(logo_path, width=120)
+    st.image(logo_path, use_container_width=True)
 except Exception:
     st.warning("Logo nicht gefunden. Bitte Datei 'Y-SiTE Logo.png' im Script-Ordner ablegen.")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Fragenstruktur (je Kategorie 5 Fragen) ---
 delegation_questions = {
@@ -51,13 +86,13 @@ delegation_questions = {
 
 # --- Delegationsstufen ---
 delegation_levels = {
-    1: "1. Ich entscheide allein",
-    2: "2. Ich entscheide und erkläre dir meine Gründe",
-    3: "3. Ich entscheide, hole mir vorher aber deine Meinung ein",
-    4: "4. Wir entscheiden gemeinsam",
-    5: "5. Du entscheidest, nachdem du meinen Rat gehört hast",
-    6: "6. Du entscheidest, informierst mich aber",
-    7: "7. Du entscheidest komplett eigenständig"
+    1: "1. Verkünden   - Ich entscheide allein",
+    2: "2. Verkaufen   - Ich entscheide und erkläre dir meine Gründe",
+    3: "3. Befragen    - Ich entscheide, hole mir vorher aber deine Meinung ein",
+    4: "4. Einigen     - Wir entscheiden gemeinsam",
+    5: "5. Beraten     - Du entscheidest, nachdem du meinen Rat gehört hast",
+    6: "6. Erkundigen  - Du entscheidest, informierst mich aber",
+    7: "7. Delegieren  - Du entscheidest komplett eigenständig"
 }
 
 def reset_all_states(confirm=False):
@@ -100,6 +135,33 @@ for key, default in [
     if key not in st.session_state:
         st.session_state[key] = default
 
+# --- Neu-Start-Button (ganz rechts, aber NICHT auf der Startseite) ---
+if st.session_state.phase != 'setup':
+    cols = st.columns([8, 1])  # Button ganz rechts oben
+    with cols[1]:
+        # Der "Neu-Start"-Button bekommt die eigene CSS-Klasse über unsafe_allow_html (per JS nachträglich)
+        st.markdown("""
+        <script>
+        Array.from(document.querySelectorAll('button')).forEach(btn => {
+            if (btn.innerText.trim() === "Neu-Start") {
+                btn.classList.add('neu-start-btn');
+            }
+        });
+        </script>
+        """, unsafe_allow_html=True)
+        if st.button("Neu-Start", key="neu_start_button"):
+            reset_all_states(confirm=False)
+
+# --- Reset-Dialog (bleibt überall erreichbar, wenn nötig) ---
+if st.session_state.show_reset_dialog:
+    st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
+    col1, col2 = st.columns([1, 1])
+    if col1.button("Ja, alles zurücksetzen"):
+        reset_all_states(confirm=True)
+    if col2.button("Abbrechen"):
+        st.session_state.show_reset_dialog = False
+        st.rerun()
+
 # --- Einleitung ---
 if st.session_state.phase == 'setup':
     st.title("Delegation Poker")
@@ -112,20 +174,21 @@ if st.session_state.phase == 'setup':
 
         ### Wie funktioniert es?
         - Es gibt 7 Delegationsebenen:
-          1. Ich entscheide allein  
-          2. Ich entscheide und erkläre dir meine Gründe  
-          3. Ich entscheide, hole mir vorher aber deine Meinung ein  
-          4. Wir entscheiden gemeinsam  
-          5. Du entscheidest, nachdem du meinen Rat gehört hast  
-          6. Du entscheidest, informierst mich aber  
-          7. Du entscheidest komplett eigenständig
+          1. **Verkünden**  - Ich entscheide allein  
+          2. **Verkaufen**  - Ich entscheide und erkläre dir meine Gründe  
+          3. **Befragen**.  - Ich entscheide, hole mir vorher aber deine Meinung ein  
+          4. **Einigen**.   - Wir entscheiden gemeinsam  
+          5. **Beraten**    - Du entscheidest, nachdem du meinen Rat gehört hast  
+          6. **Erkundigen** - Du entscheidest, informierst mich aber  
+          7. **Delegieren** - Du entscheidest komplett eigenständig
+
 
         - In jeder Runde wird eine Frage gestellt, z.B.:  
         „Wer entscheidet, ob neue Softwaretools angeschafft werden?“
 
-        - Alle Spieler:innen wählen verdeckt ihre Einschätzung im Chat von Teams (Stufe 1–7).
+        - Alle Spieler:innen wählen verdeckt ihre Einschätzung (Stufe 1–7) und schreiben sie in den Chat von Teams.
 
-        - Wenn alle ihre Einschätzung vorgenommen haben, wird der Eintrag im Chat gesendet und gemeinsam besprochen.
+        - Wenn alle ihre Einschätzung vorgenommen haben, werden die Einträge im Chat gesendet angezeigt und gemeinsam besprochen.
 
         ### Ziel
         Am Ende habt ihr ein besseres Verständnis davon, wie Verantwortung und Entscheidungen im Team verteilt sind – und wo ihr vielleicht etwas anpassen wollt.
@@ -245,19 +308,12 @@ elif st.session_state.phase == 'voting':
 # --- Ergebnisphase ---
 elif st.session_state.phase == 'results':
     category, question = st.session_state.current_question
-    votes = list(st.session_state.votes.values())
-    avg = sum(votes) / len(votes)
-    stdev = (sum((x - avg) ** 2 for x in votes) / len(votes)) ** 0.5 if len(votes) > 1 else 0.0
-    consensus = len(set(votes)) == 1
 
     st.write("### Ergebnisse")
     for player, vote in st.session_state.votes.items():
-        st.write(f"{player}: Stufe {vote} ({delegation_levels[vote]})")
-    st.write(f"Durchschnittliche Stufe: **{avg:.2f}**")
-    st.write(f"Standardabweichung: **{stdev:.2f}**")
-    st.write(f"Konsens erreicht? **{'Ja' if consensus else 'Nein'}**")
+        st.write(f"{player}: {vote} ({delegation_levels[vote]})")
 
-    # Visualisierung
+    # Visualisierung bleibt optional
     fig, ax = plt.subplots()
     players = list(st.session_state.votes.keys())
     scores = list(st.session_state.votes.values())
@@ -276,10 +332,7 @@ elif st.session_state.phase == 'results':
     st.session_state.round_log.append({
         'category': category,
         'question': question,
-        'votes': st.session_state.votes.copy(),
-        'average': avg,
-        'stdev': stdev,
-        'consensus': consensus
+        'votes': st.session_state.votes.copy()
     })
 
     if st.button("Frage wiederholen"):
@@ -296,58 +349,52 @@ elif st.session_state.phase == 'results':
             st.session_state.phase = 'voting'
         st.rerun()
 
-# --- Immer sichtbare Buttons und Reset-Dialog ---
-if st.session_state.show_reset_dialog:
-    st.warning("Willst du das Spiel wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.")
-    col1, col2 = st.columns(2)
-    if col1.button("Ja, alles zurücksetzen"):
-        reset_all_states(confirm=True)
-    if col2.button("Abbrechen"):
-        st.session_state.show_reset_dialog = False
-        st.rerun()
-else:
-    if st.button("Neustart"):
-        reset_all_states(confirm=False)
-
-# --- Download Ergebnisse ---
+# --- Download Ergebnisse (finale Version pro Frage) ---
 if st.session_state.round_log:
+    final_questions = {}
+    for r in st.session_state.round_log:
+        key = (r['category'], r['question'])
+        final_questions[key] = r  # Immer der letzte Stand überschreibt vorherige
+
     df = pd.DataFrame([
         {
             'Kategorie': r['category'],
             'Frage': r['question'],
-            'Durchschnitt': r['average'],
-            'Standardabweichung': r['stdev'],
-            'Konsens': r['consensus'],
-            'Votes': ", ".join(f"{k}: {v}" for k, v in r['votes'].items())
+            'Votes': ", ".join(f"{k}: {v} ({delegation_levels[v]})" for k, v in r['votes'].items())
         }
-        for r in st.session_state.round_log
+        for r in final_questions.values()
     ])
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download Ergebnisse (CSV)", data=csv, file_name='delegation_poker_results.csv', mime='text/csv')
 
-# --- Protokoll / Übersicht aller geklärten Delegationspunkte ---
+# --- Protokoll / Übersicht aller geklärten Delegationspunkte (ohne Dopplungen, nur letzter Stand) ---
 if st.session_state.round_log:
+    final_questions = {}
+    for r in st.session_state.round_log:
+        key = (r['category'], r['question'])
+        final_questions[key] = r  # Immer der letzte Stand überschreibt vorherige
+
     if 'show_protocol' not in st.session_state:
         st.session_state['show_protocol'] = False
 
-    # Button zum Protokoll ein- und ausblenden
     if not st.session_state['show_protocol']:
         if st.button("Spiel beenden & Protokoll anzeigen"):
             st.session_state['show_protocol'] = True
             st.rerun()
     else:
-        st.markdown("## Protokoll aller geklärten Delegationspunkte")
-        for i, r in enumerate(st.session_state.round_log, 1):
+        st.markdown("## Protokoll aller geklärten Delegationspunkte (finale Version pro Frage)")
+        for i, ((category, question), r) in enumerate(final_questions.items(), 1):
             st.markdown(f"""
-            **{i}. {r['category']}**  
-            *{r['question']}*
+            **{i}. {category}**  
+            *{question}*
 
-            - Durchschnittliche Stufe: **{r['average']:.2f}**
-            - Standardabweichung: **{r['stdev']:.2f}**
-            - Konsens: **{'Ja' if r['consensus'] else 'Nein'}**
-            - Stimmen: {", ".join(f"{k}: {v}" for k, v in r['votes'].items())}
-            ---
+            - Stimmen:
             """)
+            for player, vote in r['votes'].items():
+                st.markdown(
+                    f"  - {player}: {vote} ({delegation_levels[vote]})"
+                )
+            st.markdown("---")
         if st.button("Protokoll ausblenden"):
             st.session_state['show_protocol'] = False
             st.rerun()
@@ -358,7 +405,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; font-size: 0.9em; color: #888; margin-top: 10px;'>
-        <b>Powered very relaxed with wine & ChatGpt 4.1 - Y-SiTE - Lars Bossemeyer
+        <b>Powered very relaxed with wine & ChatGpt 4.1 Vibe-Coding - Y-SiTE - Lars Bossemeyer
     </div>
     """,
     unsafe_allow_html=True
